@@ -64,6 +64,7 @@
     | `BOT_TOKEN` | **Обязательно.** Токен вашего Telegram-бота. | `1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11` |
     | `ADMIN_IDS` | **Обязательно.** ID администраторов в Telegram через запятую. | `12345678,98765432` |
     | `DEFAULT_LANGUAGE` | Язык по умолчанию для новых пользователей. | `ru` |
+    | `TELEGRAM_PROXY_URL` | (Опционально) Прокси для запросов бота к Telegram Bot API. Поддерживаются `http(s)://`, `socks4://`, `socks4a://`, `socks5://`, `socks5h://`. | `socks5://user:pass@127.0.0.1:1080` |
     | `SUPPORT_LINK` | (Опционально) Ссылка на поддержку. | `https://t.me/your_support` |
     | `SUBSCRIPTION_MINI_APP_URL` | (Опционально) URL Mini App для показа подписки. | `https://t.me/your_bot/app` |
     | `MY_DEVICES_SECTION_ENABLED` | Включить раздел «Мои устройства» в меню подписки (`true`/`false`). | `false` |

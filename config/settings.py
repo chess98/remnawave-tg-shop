@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlsplit, urlunsplit
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, ValidationError, computed_field, field_validator, model_validator
 from typing import Optional, List, Dict, Any
@@ -273,6 +274,31 @@ class Settings(BaseSettings):
     def PRIMARY_ADMIN_ID(self) -> Optional[int]:
         ids = self.ADMIN_IDS
         return ids[0] if ids else None
+
+    @computed_field
+    @property
+    def TELEGRAM_PROXY_SAFE_URL(self) -> Optional[str]:
+        if not self.TELEGRAM_PROXY_URL:
+            return None
+
+        parsed = urlsplit(self.TELEGRAM_PROXY_URL)
+        if parsed.username is None and parsed.password is None:
+            return self.TELEGRAM_PROXY_URL
+
+        auth_part = ''
+        if parsed.username is not None:
+            auth_part = parsed.username
+            if parsed.password is not None:
+                auth_part += ':***'
+
+        masked_netloc = auth_part
+        if masked_netloc:
+            masked_netloc += '@'
+        masked_netloc += parsed.hostname or ''
+        if parsed.port is not None:
+            masked_netloc += f':{parsed.port}'
+
+        return urlunsplit((parsed.scheme, masked_netloc, parsed.path, parsed.query, parsed.fragment))
 
     @computed_field
     @property
@@ -646,6 +672,35 @@ class Settings(BaseSettings):
             return None
         return v
     
+    @field_validator('TELEGRAM_PROXY_URL')
+    @classmethod
+    def validate_telegram_proxy_url(cls, v):
+        if v is None:
+            return None
+
+        parsed = urlsplit(v.strip())
+        allowed_schemes = {'http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h'}
+        scheme = parsed.scheme.lower()
+
+        if scheme not in allowed_schemes:
+            raise ValueError(
+                'TELEGRAM_PROXY_URL must use one of the supported schemes: '
+                'http, https, socks4, socks4a, socks5, socks5h.'
+            )
+
+        if not parsed.hostname or parsed.port is None:
+            raise ValueError(
+                'TELEGRAM_PROXY_URL must include both host and port, for example socks5://127.0.0.1:1080.'
+            )
+
+        if parsed.path not in ('', '/'):
+            raise ValueError('TELEGRAM_PROXY_URL must not contain a path component.')
+
+        if parsed.scheme != scheme:
+            v = urlunsplit((scheme, parsed.netloc, parsed.path, parsed.query, parsed.fragment))
+
+        return v
+
     @field_validator(
         'REQUIRED_CHANNEL_ID',
         'FREEKASSA_PAYMENT_METHOD_ID',
